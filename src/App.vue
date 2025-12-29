@@ -270,6 +270,7 @@ function handleBlur() {
           :value="value"
           :placeholder="placeholder"
           :class="{ error: error }"
+          inputmode="numeric"
           @input="onInput"
           @focus="onFocus"
           @blur="() =&gt; { onBlur(); handleBlur() }"
