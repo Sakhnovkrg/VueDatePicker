@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
 import type { LocaleCode, CalendarDay, LocaleStrings } from './types'
 import { getLocale } from './locales'
 import { getCalendarDays, isValidDate } from './utils'
@@ -27,6 +27,7 @@ const viewYear = ref(initialDate.getFullYear())
 const viewMonth = ref(initialDate.getMonth())
 const viewMode = ref<'days' | 'months' | 'years'>('days')
 const slideDirection = ref<'left' | 'right'>('left')
+const viewTransitionName = ref('')
 
 // Computed
 const localeStrings = computed<LocaleStrings>(() => getLocale(props.locale))
@@ -95,11 +96,13 @@ function selectDay(day: CalendarDay) {
 
 function selectMonth(monthIndex: number) {
   viewMonth.value = monthIndex
+  viewTransitionName.value = 'dp-zoom-out'
   viewMode.value = 'days'
 }
 
 function selectYear(year: number) {
   viewYear.value = year
+  viewTransitionName.value = 'dp-zoom-out'
   viewMode.value = 'months'
 }
 
@@ -120,10 +123,12 @@ function goToToday() {
 }
 
 function toggleMonthView() {
+  viewTransitionName.value = viewMode.value === 'months' ? 'dp-zoom-out' : 'dp-zoom-in'
   viewMode.value = viewMode.value === 'months' ? 'days' : 'months'
 }
 
 function toggleYearView() {
+  viewTransitionName.value = viewMode.value === 'years' ? 'dp-zoom-out' : 'dp-zoom-in'
   viewMode.value = viewMode.value === 'years' ? 'days' : 'years'
 }
 
@@ -139,10 +144,11 @@ watch(() => props.modelValue, (newValue) => {
 const yearsContainer = ref<HTMLElement | null>(null)
 watch(viewMode, (mode) => {
   if (mode === 'years') {
-    setTimeout(() => {
+    // Scroll instantly on next tick (before animation starts visually)
+    nextTick(() => {
       const currentYearEl = yearsContainer.value?.querySelector('.dp-year-current')
-      currentYearEl?.scrollIntoView({ block: 'center' })
-    }, 0)
+      currentYearEl?.scrollIntoView({ block: 'center', behavior: 'instant' })
+    })
   }
 })
 </script>
@@ -183,67 +189,73 @@ watch(viewMode, (mode) => {
       </button>
     </div>
 
-    <!-- Days View -->
-    <div v-if="viewMode === 'days'" class="dp-days-view">
-      <div class="dp-weekdays">
-        <div v-for="day in weekdayLabels" :key="day" class="dp-weekday">
-          {{ day }}
-        </div>
-      </div>
+    <div class="dp-view-wrapper">
+      <Transition :name="viewTransitionName">
+        <!-- Days View -->
+        <div v-if="viewMode === 'days'" class="dp-days-view" key="days">
+          <div class="dp-weekdays">
+            <div v-for="day in weekdayLabels" :key="day" class="dp-weekday">
+              {{ day }}
+            </div>
+          </div>
 
-      <div class="dp-days-wrapper">
-        <Transition :name="`dp-slide-${slideDirection}`">
-          <div class="dp-days" :key="`${viewYear}-${viewMonth}`">
+          <div class="dp-days-wrapper">
+            <Transition :name="`dp-slide-${slideDirection}`">
+              <div class="dp-days" :key="`${viewYear}-${viewMonth}`">
+                <button
+                  v-for="(day, index) in calendarDays"
+                  :key="index"
+                  type="button"
+                  class="dp-day"
+                  :class="{
+                    'dp-day-other': !day.isCurrentMonth,
+                    'dp-day-today': day.isToday,
+                    'dp-day-selected': day.isSelected,
+                    'dp-day-disabled': day.isDisabled
+                  }"
+                  :disabled="day.isDisabled"
+                  @click="selectDay(day)"
+                >
+                  {{ day.day }}
+                </button>
+              </div>
+            </Transition>
+          </div>
+        </div>
+
+        <!-- Months View -->
+        <div v-else-if="viewMode === 'months'" class="dp-months-view" key="months">
+          <button
+            v-for="month in months"
+            :key="month.index"
+            type="button"
+            class="dp-month"
+            :class="{ 'dp-month-current': month.index === viewMonth }"
+            @click="selectMonth(month.index)"
+          >
+            {{ month.shortName }}
+          </button>
+        </div>
+
+        <!-- Years View -->
+        <div v-else class="dp-years-view" key="years">
+          <div class="dp-years-scroll" ref="yearsContainer">
             <button
-              v-for="(day, index) in calendarDays"
-              :key="index"
+              v-for="year in years"
+              :key="year"
               type="button"
-              class="dp-day"
+              class="dp-year"
               :class="{
-                'dp-day-other': !day.isCurrentMonth,
-                'dp-day-today': day.isToday,
-                'dp-day-selected': day.isSelected,
-                'dp-day-disabled': day.isDisabled
+                'dp-year-current': year === viewYear,
+                'dp-year-today': year === new Date().getFullYear()
               }"
-              :disabled="day.isDisabled"
-              @click="selectDay(day)"
+              @click="selectYear(year)"
             >
-              {{ day.day }}
+              {{ year }}
             </button>
           </div>
-        </Transition>
-      </div>
-    </div>
-
-    <!-- Months View -->
-    <div v-else-if="viewMode === 'months'" class="dp-months-view">
-      <button
-        v-for="month in months"
-        :key="month.index"
-        type="button"
-        class="dp-month"
-        :class="{ 'dp-month-current': month.index === viewMonth }"
-        @click="selectMonth(month.index)"
-      >
-        {{ month.shortName }}
-      </button>
-    </div>
-
-    <!-- Years View -->
-    <div v-else class="dp-years-view" ref="yearsContainer">
-      <button
-        v-for="year in years"
-        :key="year"
-        type="button"
-        class="dp-year"
-        :class="{
-          'dp-year-current': year === viewYear,
-          'dp-year-today': year === new Date().getFullYear()
-        }"
-        @click="selectYear(year)"
-      >
-        {{ year }}
-      </button>
+        </div>
+      </Transition>
     </div>
 
     <!-- Footer -->
@@ -423,6 +435,7 @@ watch(viewMode, (mode) => {
 .dp-months-view {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(4, 1fr);
   gap: 0.5rem;
   padding: 0.75rem;
 }
@@ -431,7 +444,6 @@ watch(viewMode, (mode) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 48px;
   font-size: 0.875rem;
   background: transparent;
   border: none;
@@ -463,11 +475,16 @@ watch(viewMode, (mode) => {
 
 /* Years View */
 .dp-years-view {
+  display: flex;
+  flex-direction: column;
+  padding: 0.75rem;
+}
+
+.dp-years-scroll {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 0.5rem;
-  padding: 0.75rem;
-  max-height: 260px;
+  flex: 1;
   overflow-y: auto;
 }
 
@@ -547,25 +564,25 @@ watch(viewMode, (mode) => {
 }
 
 /* Scrollbar styling */
-.dp-years-view {
+.dp-years-scroll {
   scrollbar-width: var(--dp-scrollbar-width, thin);
   scrollbar-color: var(--dp-scrollbar, #d1d5db) transparent;
 }
 
-.dp-years-view::-webkit-scrollbar {
+.dp-years-scroll::-webkit-scrollbar {
   width: var(--dp-scrollbar-size, 6px);
 }
 
-.dp-years-view::-webkit-scrollbar-track {
+.dp-years-scroll::-webkit-scrollbar-track {
   background: var(--dp-scrollbar-track, transparent);
 }
 
-.dp-years-view::-webkit-scrollbar-thumb {
+.dp-years-scroll::-webkit-scrollbar-thumb {
   background: var(--dp-scrollbar, #d1d5db);
   border-radius: var(--dp-scrollbar-radius, 3px);
 }
 
-.dp-years-view::-webkit-scrollbar-thumb:hover {
+.dp-years-scroll::-webkit-scrollbar-thumb:hover {
   background: var(--dp-scrollbar-hover, #9ca3af);
 }
 
@@ -605,5 +622,56 @@ watch(viewMode, (mode) => {
 
 .dp-slide-right-leave-to {
   transform: translateX(100%);
+}
+
+/* View wrapper for vertical animation */
+.dp-view-wrapper {
+  position: relative;
+  overflow: hidden;
+  height: 264px; /* Fixed height for smooth transitions */
+}
+
+.dp-days-view,
+.dp-months-view,
+.dp-years-view {
+  height: 100%;
+  box-sizing: border-box;
+}
+
+/* Zoom animations for view transitions */
+.dp-zoom-in-enter-active,
+.dp-zoom-out-enter-active {
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.dp-zoom-in-leave-active,
+.dp-zoom-out-leave-active {
+  transition: transform 0.15s ease, opacity 0.08s ease;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+}
+
+/* Zoom in: entering scales up from smaller, leaving scales up and fades */
+.dp-zoom-in-enter-from {
+  transform: scale(1.15);
+  opacity: 0;
+}
+
+.dp-zoom-in-leave-to {
+  transform: scale(0.9);
+  opacity: 0;
+}
+
+/* Zoom out: entering scales down from larger, leaving scales down and fades */
+.dp-zoom-out-enter-from {
+  transform: scale(0.9);
+  opacity: 0;
+}
+
+.dp-zoom-out-leave-to {
+  transform: scale(1.15);
+  opacity: 0;
 }
 </style>
