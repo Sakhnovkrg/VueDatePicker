@@ -6,7 +6,8 @@ const date1 = ref<Date | null>(null)
 const date2 = ref<Date | null>(null)
 const date3 = ref<Date | null>(null)
 const date4 = ref<Date | null>(null)
-const forceError = ref(false)
+const touched4 = ref(false)
+const error4 = computed(() => touched4.value && !date4.value)
 
 const locale = ref<LocaleCode>('ru')
 const format = ref<DateFormat>('dd.mm.yyyy')
@@ -151,36 +152,32 @@ const maxDate = computed(() => {
       </div>
 
       <div class="example">
-        <h3>4. Вывод ошибки</h3>
-        <p class="desc">Кастомный класс и сообщение</p>
+        <h3>4. Своя валидация</h3>
+        <p class="desc">touched + v-model</p>
         <DatePicker
           v-model="date4"
           :locale="locale"
           :format="format"
           teleport
         >
-          <template #default="{ value, placeholder, hasError, onInput, onFocus, onBlur, onClick }">
+          <template #default="{ value, placeholder, onInput, onFocus, onBlur, onClick }">
             <div>
               <input
                 type="text"
                 class="input"
-                :class="(hasError || forceError) ? 'input-error' : ''"
+                :class="{ 'input-error': error4 }"
                 :value="value"
                 :placeholder="placeholder"
                 inputmode="numeric"
                 @input="onInput"
                 @focus="onFocus"
-                @blur="onBlur"
+                @blur="(e) => { onBlur(e); touched4 = true }"
                 @click="onClick"
               />
-              <span v-if="hasError || forceError" class="error">Введите корректную дату</span>
+              <span v-if="error4" class="error">Выберите дату</span>
             </div>
           </template>
         </DatePicker>
-        <label class="checkbox-label" style="margin-top: 0.5rem;">
-          <input type="checkbox" v-model="forceError" />
-          Показать ошибку
-        </label>
         <div class="value">Значение: {{ date4?.toLocaleDateString() ?? 'null' }}</div>
       </div>
     </div>
@@ -242,7 +239,6 @@ teleport      string | boolean // teleport popup ('body', true, false)</code></p
       <pre><code>value         string    // отформатированное значение
 placeholder   string    // плейсхолдер для инпута
 disabled      boolean   // состояние disabled
-hasError      boolean   // есть ошибка валидации
 isOpen        boolean   // попап открыт
 onInput       function  // обработчик ввода
 onFocus       function  // обработчик фокуса
@@ -255,34 +251,33 @@ close         function  // закрыть попап</code></pre>
     <div class="css-vars">
       <h3>Пример использования</h3>
       <pre><code>&lt;script setup lang="ts"&gt;
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { DatePicker } from '@/components/DatePicker'
 
 const date = ref&lt;Date | null&gt;(null)
-const minDate = new Date()
+const touched = ref(false)
+const error = computed(() =&gt; touched.value &amp;&amp; !date.value ? 'Выберите дату' : '')
+
+function handleBlur() {
+  touched.value = true
+  // тут можно вызвать vee-validate, zod и т.д.
+}
 &lt;/script&gt;
 
 &lt;template&gt;
-  &lt;DatePicker
-    v-model="date"
-    locale="ru"
-    format="dd.mm.yyyy"
-    :min-date="minDate"
-    teleport
-  &gt;
-    &lt;template #default="{ value, placeholder, hasError, onInput, onFocus, onBlur, onClick }"&gt;
+  &lt;DatePicker v-model="date" locale="ru" format="dd.mm.yyyy" teleport&gt;
+    &lt;template #default="{ value, placeholder, onInput, onFocus, onBlur, onClick }"&gt;
       &lt;div&gt;
         &lt;input
-          type="text"
           :value="value"
           :placeholder="placeholder"
-          :class="{ 'input-error': hasError }"
+          :class="{ error: error }"
           @input="onInput"
           @focus="onFocus"
-          @blur="onBlur"
+          @blur="(e) =&gt; { onBlur(e); handleBlur() }"
           @click="onClick"
         /&gt;
-        &lt;span v-if="hasError"&gt;Некорректная дата&lt;/span&gt;
+        &lt;span v-if="error"&gt;{{ error }}&lt;/span&gt;
       &lt;/div&gt;
     &lt;/template&gt;
   &lt;/DatePicker&gt;

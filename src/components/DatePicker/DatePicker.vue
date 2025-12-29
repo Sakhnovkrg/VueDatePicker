@@ -34,7 +34,6 @@ const containerRef = ref<HTMLElement | null>(null)
 const popupRef = ref<HTMLElement | null>(null)
 const isOpen = ref(false)
 const inputValue = ref('')
-const hasError = ref(false)
 const popupStyle = ref<Record<string, string>>({})
 
 const localeStrings = computed(() => getLocale(props.locale))
@@ -51,18 +50,8 @@ function isDateInRange(date: Date): boolean {
 }
 
 function validateDate(date: Date | null): boolean {
-  if (!date) {
-    hasError.value = false
-    return true
-  }
-
-  if (!isValidDate(date) || !isDateInRange(date)) {
-    hasError.value = true
-    return false
-  }
-
-  hasError.value = false
-  return true
+  if (!date) return true
+  return isValidDate(date) && isDateInRange(date)
 }
 
 function updateInputValue(date: Date | null) {
@@ -84,7 +73,6 @@ function handleInput(event: Event) {
       emit('change', parsed)
     }
   } else if (maskedValue.length === 0) {
-    hasError.value = false
     emit('update:modelValue', null)
     emit('change', null)
   }
@@ -94,10 +82,7 @@ function handleBlur() {
   const value = inputValue.value
 
   // Пустой инпут - ок
-  if (value.length === 0) {
-    hasError.value = false
-    return
-  }
+  if (value.length === 0) return
 
   // Неполный ввод или невалидная дата - сбросить
   if (value.length < 10) {
@@ -117,7 +102,6 @@ function resetInput() {
   } else {
     inputValue.value = ''
   }
-  hasError.value = false
 }
 
 function handleFocus() {
@@ -238,8 +222,7 @@ onUnmounted(() => {
 defineExpose({
   open: openPopup,
   close: closePopup,
-  isOpen,
-  hasError
+  isOpen
 })
 </script>
 
@@ -249,7 +232,6 @@ defineExpose({
       :value="inputValue"
       :placeholder="placeholder"
       :disabled="disabled"
-      :has-error="hasError"
       :is-open="isOpen"
       :on-input="handleInput"
       :on-focus="handleFocus"
