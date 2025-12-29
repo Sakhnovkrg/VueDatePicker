@@ -81,11 +81,10 @@ const maxDate = computed(() => {
           :format="format"
           teleport
         >
-          <template #default="{ value, placeholder, onInput, onFocus, onBlur, onClick, hasError }">
+          <template #default="{ value, placeholder, onInput, onFocus, onBlur, onClick }">
             <input
               type="text"
               class="input"
-              :class="{ 'input-error': hasError }"
               :value="value"
               :placeholder="placeholder"
               inputmode="numeric"
@@ -110,11 +109,10 @@ const maxDate = computed(() => {
           :max-date="maxDate"
           teleport
         >
-          <template #default="{ value, placeholder, onInput, onFocus, onBlur, onClick, hasError }">
+          <template #default="{ value, placeholder, onInput, onFocus, onBlur, onClick }">
             <input
               type="text"
               class="input"
-              :class="{ 'input-error': hasError }"
               :value="value"
               :placeholder="placeholder"
               inputmode="numeric"
@@ -171,7 +169,7 @@ const maxDate = computed(() => {
                 inputmode="numeric"
                 @input="onInput"
                 @focus="onFocus"
-                @blur="(e) => { onBlur(e); touched4 = true }"
+                @blur="() => { onBlur(); touched4 = true }"
                 @click="onClick"
               />
               <span v-if="error4" class="error">Выберите дату</span>
@@ -274,10 +272,10 @@ function handleBlur() {
           :class="{ error: error }"
           @input="onInput"
           @focus="onFocus"
-          @blur="(e) =&gt; { onBlur(e); handleBlur() }"
+          @blur="() =&gt; { onBlur(); handleBlur() }"
           @click="onClick"
         /&gt;
-        &lt;span v-if="error"&gt;{{ error }}&lt;/span&gt;
+        &lt;span v-if="error"&gt;&#123;&#123; error &#125;&#125;&lt;/span&gt;
       &lt;/div&gt;
     &lt;/template&gt;
   &lt;/DatePicker&gt;
