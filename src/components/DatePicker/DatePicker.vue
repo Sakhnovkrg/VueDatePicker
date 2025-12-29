@@ -165,8 +165,14 @@ function positionPopup() {
   let top = containerRect.bottom + 4
   let left = containerRect.left
 
+  // Не помещается снизу — пробуем сверху
   if (top + popupHeight > viewportHeight - 10) {
     top = containerRect.top - popupHeight - 4
+  }
+
+  // Не помещается сверху — ставим минимум
+  if (top < 10) {
+    top = 10
   }
 
   if (left + popupWidth > viewportWidth - 10) {
