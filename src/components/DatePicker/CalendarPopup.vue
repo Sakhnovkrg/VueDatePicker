@@ -350,7 +350,8 @@ watch(viewMode, (mode) => {
 .dp-days {
   display: grid;
   grid-template-columns: repeat(7, 36px);
-  justify-content: center;
+  width: 252px; /* 7 × 36px */
+  margin: 0 auto;
 }
 
 .dp-weekday {
@@ -590,6 +591,8 @@ watch(viewMode, (mode) => {
 .dp-days-wrapper {
   position: relative;
   overflow: hidden;
+  min-height: 216px; /* 6 rows × 36px - prevent collapse during animation */
+  contain: layout;
 }
 
 /* Slide animations */
@@ -598,10 +601,6 @@ watch(viewMode, (mode) => {
 .dp-slide-right-enter-active,
 .dp-slide-right-leave-active {
   transition: transform 0.25s ease;
-}
-
-.dp-slide-left-leave-active,
-.dp-slide-right-leave-active {
   position: absolute;
   top: 0;
   left: 0;
