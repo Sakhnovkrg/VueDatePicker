@@ -642,6 +642,8 @@ watch(viewMode, (mode) => {
 .dp-zoom-in-enter-active,
 .dp-zoom-out-enter-active {
   transition: transform 0.2s ease, opacity 0.2s ease;
+  will-change: transform, opacity;
+  backface-visibility: hidden;
 }
 
 .dp-zoom-in-leave-active,
@@ -651,6 +653,8 @@ watch(viewMode, (mode) => {
   top: 0;
   left: 0;
   right: 0;
+  will-change: transform, opacity;
+  backface-visibility: hidden;
 }
 
 /* Zoom in: entering scales up from smaller, leaving scales up and fades */
