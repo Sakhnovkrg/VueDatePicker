@@ -276,6 +276,7 @@ watch(viewMode, (mode) => {
   box-shadow: var(--dp-shadow, 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1));
   overflow: hidden;
   user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* Header */
