@@ -26,6 +26,7 @@ const initialDate = props.modelValue ?? new Date()
 const viewYear = ref(initialDate.getFullYear())
 const viewMonth = ref(initialDate.getMonth())
 const viewMode = ref<'days' | 'months' | 'years'>('days')
+const slideDirection = ref<'left' | 'right'>('left')
 
 // Computed
 const localeStrings = computed<LocaleStrings>(() => getLocale(props.locale))
@@ -67,6 +68,7 @@ const months = computed(() => {
 
 // Methods
 function goToPrevMonth() {
+  slideDirection.value = 'right'
   if (viewMonth.value === 0) {
     viewMonth.value = 11
     viewYear.value--
@@ -76,6 +78,7 @@ function goToPrevMonth() {
 }
 
 function goToNextMonth() {
+  slideDirection.value = 'left'
   if (viewMonth.value === 11) {
     viewMonth.value = 0
     viewYear.value++
@@ -188,23 +191,27 @@ watch(viewMode, (mode) => {
         </div>
       </div>
 
-      <div class="dp-days">
-        <button
-          v-for="(day, index) in calendarDays"
-          :key="index"
-          type="button"
-          class="dp-day"
-          :class="{
-            'dp-day-other': !day.isCurrentMonth,
-            'dp-day-today': day.isToday,
-            'dp-day-selected': day.isSelected,
-            'dp-day-disabled': day.isDisabled
-          }"
-          :disabled="day.isDisabled"
-          @click="selectDay(day)"
-        >
-          {{ day.day }}
-        </button>
+      <div class="dp-days-wrapper">
+        <Transition :name="`dp-slide-${slideDirection}`">
+          <div class="dp-days" :key="`${viewYear}-${viewMonth}`">
+            <button
+              v-for="(day, index) in calendarDays"
+              :key="index"
+              type="button"
+              class="dp-day"
+              :class="{
+                'dp-day-other': !day.isCurrentMonth,
+                'dp-day-today': day.isToday,
+                'dp-day-selected': day.isSelected,
+                'dp-day-disabled': day.isDisabled
+              }"
+              :disabled="day.isDisabled"
+              @click="selectDay(day)"
+            >
+              {{ day.day }}
+            </button>
+          </div>
+        </Transition>
       </div>
     </div>
 
@@ -560,5 +567,43 @@ watch(viewMode, (mode) => {
 
 .dp-years-view::-webkit-scrollbar-thumb:hover {
   background: var(--dp-scrollbar-hover, #9ca3af);
+}
+
+/* Days wrapper for animation */
+.dp-days-wrapper {
+  position: relative;
+  overflow: hidden;
+}
+
+/* Slide animations */
+.dp-slide-left-enter-active,
+.dp-slide-left-leave-active,
+.dp-slide-right-enter-active,
+.dp-slide-right-leave-active {
+  transition: transform 0.25s ease;
+}
+
+.dp-slide-left-leave-active,
+.dp-slide-right-leave-active {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+}
+
+.dp-slide-left-enter-from {
+  transform: translateX(100%);
+}
+
+.dp-slide-left-leave-to {
+  transform: translateX(-100%);
+}
+
+.dp-slide-right-enter-from {
+  transform: translateX(-100%);
+}
+
+.dp-slide-right-leave-to {
+  transform: translateX(100%);
 }
 </style>
