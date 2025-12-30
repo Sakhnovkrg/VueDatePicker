@@ -429,6 +429,10 @@ watch(viewMode, (mode) => {
   cursor: not-allowed;
 }
 
+.dp-day-selected.dp-day-disabled {
+  background: var(--dp-day-disabled-color, #d1d5db) !important;
+}
+
 .dp-day-disabled:hover {
   background: transparent;
 }

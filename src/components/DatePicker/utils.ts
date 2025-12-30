@@ -163,3 +163,38 @@ export function applyDateMask(value: string, format: DateFormat): string {
     return result
   }
 }
+
+const pad = (num: number | string): string => {
+  return ('0' + num).slice(-2)
+}
+
+export function normalizeDateString(value: string): string {
+  const parts = value.split('.')
+  
+  if (parts[0] && parts[0].length === 2) {
+    let day = parseInt(parts[0])
+    if (day > 31) day = 31
+    if (day === 0) day = 1
+    parts[0] = pad(day)
+  }
+
+  if (parts[1] && parts[1].length === 2) {
+    let month = parseInt(parts[1])
+    if (month > 12) month = 12
+    if (month === 0) month = 1
+    parts[1] = pad(month)
+  }
+  
+  if (parts.length === 3 && parts[2].length === 4) {
+    const d = parseInt(parts[0])
+    const m = parseInt(parts[1])
+    const y = parseInt(parts[2])
+    const lastDay = new Date(y, m, 0).getDate()
+    
+    if (d > lastDay) {
+      parts[0] = pad(lastDay)
+    }
+  }
+
+  return parts.join('.')
+}

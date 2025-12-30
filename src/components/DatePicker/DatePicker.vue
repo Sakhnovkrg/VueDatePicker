@@ -2,7 +2,7 @@
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import type { LocaleCode, DateFormat } from './types'
 import { getLocale } from './locales'
-import { formatDate, parseDate, applyDateMask, isValidDate, isDateBefore, isDateAfter } from './utils'
+import { formatDate, parseDate, applyDateMask, isValidDate, isDateBefore, isDateAfter, normalizeDateString } from './utils'
 import CalendarPopup from './CalendarPopup.vue'
 
 const props = withDefaults(defineProps<{
@@ -61,14 +61,16 @@ function updateInputValue(date: Date | null) {
 function handleInput(event: Event) {
   const target = event.target as HTMLInputElement
   const rawValue = target.value
-  const maskedValue = applyDateMask(rawValue, props.format)
+  let maskedValue = applyDateMask(rawValue, props.format)
+
+  maskedValue = normalizeDateString(maskedValue)
 
   inputValue.value = maskedValue
   target.value = maskedValue
 
   if (maskedValue.length === 10) {
     const parsed = parseDate(maskedValue, props.format)
-    if (parsed && validateDate(parsed)) {
+    if (parsed) {
       emit('update:modelValue', parsed)
       emit('change', parsed)
     }
@@ -91,7 +93,7 @@ function handleBlur() {
   }
 
   const parsed = parseDate(value, props.format)
-  if (!parsed || !isValidDate(parsed) || !isDateInRange(parsed)) {
+  if (!parsed || !isValidDate(parsed)) {
     resetInput()
   }
 }
