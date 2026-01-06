@@ -170,31 +170,32 @@ const pad = (num: number | string): string => {
 
 export function normalizeDateString(value: string): string {
   const parts = value.split('.')
+  let [dayStr, monthStr, yearStr] = parts;
   
-  if (parts[0] && parts[0].length === 2) {
-    let day = parseInt(parts[0])
-    if (day > 31) day = 31
-    if (day === 0) day = 1
-    parts[0] = pad(day)
+  if (dayStr && dayStr.length === 2) {
+    let day = parseInt(dayStr);
+    if (day > 31) day = 31;
+    if (day === 0) day = 1;
+    dayStr = pad(day);
   }
 
-  if (parts[1] && parts[1].length === 2) {
-    let month = parseInt(parts[1])
-    if (month > 12) month = 12
-    if (month === 0) month = 1
-    parts[1] = pad(month)
+  if (monthStr && monthStr.length === 2) {
+    let month = parseInt(monthStr);
+    if (month > 12) month = 12;
+    if (month === 0) month = 1;
+    monthStr = pad(month);
   }
   
-  if (parts.length === 3 && parts[2].length === 4) {
-    const d = parseInt(parts[0])
-    const m = parseInt(parts[1])
-    const y = parseInt(parts[2])
-    const lastDay = new Date(y, m, 0).getDate()
+  if (dayStr && monthStr && yearStr && yearStr.length === 4) {
+    const d = parseInt(dayStr);
+    const m = parseInt(monthStr);
+    const y = parseInt(yearStr);
+    const lastDay = new Date(y, m, 0).getDate();
     
     if (d > lastDay) {
-      parts[0] = pad(lastDay)
+      dayStr = pad(lastDay);
     }
   }
 
-  return parts.join('.')
+  return [dayStr, monthStr, yearStr].filter(Boolean).join('.');
 }
