@@ -27,6 +27,7 @@ const emit = defineEmits<{
   'update:modelValue': [value: Date | null]
   'change': [value: Date | null]
   'open': []
+  'blur': []
   'close': []
 }>()
 
@@ -79,6 +80,8 @@ function handleInput(event: Event) {
 }
 
 function handleBlur() {
+  emit('blur')
+  
   const value = inputValue.value
 
   // Пустой инпут - ок
