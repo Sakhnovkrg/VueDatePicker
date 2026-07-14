@@ -31,6 +31,7 @@ const viewTransitionName = ref('')
 
 // Computed
 const localeStrings = computed<LocaleStrings>(() => getLocale(props.locale))
+const startWeekOnMonday = computed(() => props.locale !== 'en')
 
 const calendarDays = computed<CalendarDay[]>(() => {
   return getCalendarDays(
@@ -39,12 +40,14 @@ const calendarDays = computed<CalendarDay[]>(() => {
     props.modelValue,
     props.minDate,
     props.maxDate,
-    true
+    startWeekOnMonday.value
   )
 })
 
 const weekdayLabels = computed(() => {
   const days = [...localeStrings.value.weekdaysMin]
+  if (!startWeekOnMonday.value) return days
+
   const sunday = days.shift()!
   days.push(sunday)
   return days
